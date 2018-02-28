@@ -5,9 +5,12 @@ Author          : Arijit Basu <sayanarijit@gmail.com>
 Website         : https://sayanarijit.github.io
 """
 
+from __future__ import absolute_import, unicode_literals
 import json
 import requests
 import argparse
+
+VERSION = 'v0.0.1'
 
 router_endpoints = {
     'application_router',
@@ -61,16 +64,22 @@ class ZenossClient(object):
         self.session.headers.update({'content-type': 'application/json'})
         self.session.verify = verify
 
-    def __getattr__(self, attr):
+    def endpoint(self, endpoint):
         """
-        Dynamically create endpoint object
+        Return endpoint object
         """
-        if attr not in router_endpoints:
-            raise InvalidRouterEndpointError(attr)
+        if endpoint not in router_endpoints:
+            raise InvalidRouterEndpointError(endpoint)
         return ZenossEndpoint(
-            endpoint=self.baseurl + '/' + attr,
+            endpoint=self.baseurl + '/' + endpoint,
             session=self.session
         )
+
+    def __getattr__(self, attr):
+        """
+        Dynamically create endpoint
+        """
+        return self.endpoint(attr)
 
 
 class ZenossEndpoint(object):
@@ -81,51 +90,60 @@ class ZenossEndpoint(object):
         self.endpoint = endpoint
         self.session = session
 
-    def __getattr__(self, attr):
+    def action(self, action):
         """
-        Dynamically create method object
+        Return action object
         """
-        if 'Router' not in attr or attr.replace('Router', '').lower() not in self.endpoint:
-            raise InvalidActionError(attr)
+        if 'Router' not in action or action.replace('Router', '').lower() not in self.endpoint:
+            raise InvalidActionError(action)
         return ZenossAction(
-            action = self.endpoint + '/' + attr,
+            endpoint = self.endpoint,
+            action = action,
             session = self.session
         )
+
+    def __getattr__(self, attr):
+        """
+        Dynamically create action object
+        """
+        return self.action(attr)
 
 
 class ZenossAction(object):
     """
     Zenoss action
     """
-    def __init__(self, action, session):
+    def __init__(self, endpoint, action, session):
+        self.endpoint = endpoint
         self.action = action
         self.session = session
+
+    def method(self, method):
+        """
+        Return callable method
+        """
+        def wrapped(timeout=None, **kwargs):
+            kwargs.update({'action': self.action, 'method': method, 'tid': 1})
+            return self.session.post(
+                self.endpoint,
+                data = json.dumps(kwargs),
+                timeout = timeout
+            ).json()
+        return wrapped
 
     def __getattr__(self, attr):
         """
         Dynamically create method object
         """
-        self.method = self.action + '/' + attr
-        return self.zenoss_method
-
-    def zenoss_method(self, timeout=None, **kwargs):
-        """
-        Do the actual query
-        """
-        result = self.session.post(
-            self.method,
-            data = json.dumps(kwargs),
-            timeout = timeout
-        )
-        return result.json()
+        return self.method(attr)
 
 
-def zenoss_client():
+def cli():
     """
     Command-line interface for zenoss client
     """
-    parser = argparse.ArgumentParser(prog=__file__, description=None)
-    parser.add_argument('router_endpoint', options=router_endpoints)
+    parser = argparse.ArgumentParser(prog=__file__, description='Command-line interface for zenoss client')
+    parser.add_argument('endpoint', options=router_endpoints)
     parser.add_argument('action')
     parser.add_argument('method')
     parser.add_argument('data', nargs='?', type=json.loads, default={})
@@ -133,11 +151,17 @@ def zenoss_client():
     parser.add_argument('-u','--user')
     parser.add_argument('-p','--passwd')
     parser.add_argument('-t','--timeout', default=None)
+    parser.add_argument('-i','--indent', type=int, default=4)
+    parser.add_argument('--version', action='version', version='%(prog)s '+VERSION)
 
-    parsed = parser.parse_args()
+    p = parser.parse_args()
 
-    zenoss = ZenossClient(host=parsed.host, user=parsed.user, passwd=parsed.passwd)
-    router_endpoint = getattr(zenoss, parsed.router_endpoint)
-    action = getattr(router_endpoint, parsed.action)
-    method = getattr(action, parser.method)
-    method(timeout=parsed.timeout, **parsed.data)
+    zenoss = ZenossClient(host=p.host, user=p.user, passwd=p.passwd)
+    result = zenoss.endpoint(p.endpoint).action(p.action).method(p.method)(timeout=p.timeout, **p.data)
+    print(json.dumps(result, indent=p.indent))
+
+
+if __name__ == '__main__':
+
+    # Enter CLI
+    cli()
