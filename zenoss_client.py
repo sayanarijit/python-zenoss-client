@@ -51,6 +51,16 @@ class InvalidActionError(Exception):
         Exception.__init__(self, '"{}" is not a valid action'.format(action))
 
 
+class HTTPError(Exception):
+    def __init__(self, status):
+        Exception.__init__(self, 'Server returned HTTP status code: {}'.format(status))
+
+
+class InvalidResponseError(Exception):
+    def __init__(self, content):
+        Exception.__init__(self, 'Server returned JSON incompatible response:\n{}'.format(content))
+
+
 class ZenossClient(object):
     """
     Zenoss API client for python
@@ -129,7 +139,13 @@ class ZenossAction(object):
                 timeout = timeout
             )
             self.session.tid += 1
-            return result.json()
+            if result.status_code != 200:
+                raise HTTPError(result.status_code)
+            try:
+                return result.json()
+            except:
+                raise InvalidResponseError(result.content)
+
         return wrapped
 
     def __getattr__(self, attr):
