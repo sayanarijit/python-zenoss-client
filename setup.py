@@ -1,10 +1,11 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
-from zenoss_client import VERSION
+
+
+VERSION = 'v0.0.2'
 
 here = path.abspath(path.dirname(__file__))
-
 
 # Get requirements from requirements.txt file
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
@@ -51,10 +52,5 @@ setup(
     ],
     keywords='zenoss json api client',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=requirements,
-    entry_points={
-        'console_scripts': [
-            'zenoss-client = zenoss_client:cli',
-        ]
-    }
+    install_requires=requirements
 )

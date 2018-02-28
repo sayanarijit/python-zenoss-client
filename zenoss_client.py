@@ -9,7 +9,6 @@ from __future__ import absolute_import, unicode_literals
 import json
 import requests
 
-VERSION = 'v0.0.1'
 
 router_endpoints = {
     'application_router',
