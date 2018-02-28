@@ -8,7 +8,6 @@ Website         : https://sayanarijit.github.io
 from __future__ import absolute_import, unicode_literals
 import json
 import requests
-import argparse
 
 VERSION = 'v0.0.1'
 
@@ -62,7 +61,7 @@ class ZenossClient(object):
         self.session = requests.Session()
         self.session.auth = (user, passwd)
         self.session.headers.update({'content-type': 'application/json'})
-        self.session.verify = verify
+        self.session.tid = 0
 
     def endpoint(self, endpoint):
         """
@@ -123,12 +122,15 @@ class ZenossAction(object):
         Return callable method
         """
         def wrapped(timeout=None, **kwargs):
-            kwargs.update({'action': self.action, 'method': method, 'tid': 1})
-            return self.session.post(
+            payload = {'action': self.action, 'method': method,
+                    'tid': self.session.tid, 'data': [kwargs]}
+            result = self.session.post(
                 self.endpoint,
-                data = json.dumps(kwargs),
+                data = json.dumps(payload),
                 timeout = timeout
-            ).json()
+            )
+            self.session.tid += 1
+            return result.json()
         return wrapped
 
     def __getattr__(self, attr):
@@ -137,31 +139,3 @@ class ZenossAction(object):
         """
         return self.method(attr)
 
-
-def cli():
-    """
-    Command-line interface for zenoss client
-    """
-    parser = argparse.ArgumentParser(prog=__file__, description='Command-line interface for zenoss client')
-    parser.add_argument('endpoint', options=router_endpoints)
-    parser.add_argument('action')
-    parser.add_argument('method')
-    parser.add_argument('data', nargs='?', type=json.loads, default={})
-    parser.add_argument('-h','--host')
-    parser.add_argument('-u','--user')
-    parser.add_argument('-p','--passwd')
-    parser.add_argument('-t','--timeout', default=None)
-    parser.add_argument('-i','--indent', type=int, default=4)
-    parser.add_argument('--version', action='version', version='%(prog)s '+VERSION)
-
-    p = parser.parse_args()
-
-    zenoss = ZenossClient(host=p.host, user=p.user, passwd=p.passwd)
-    result = zenoss.endpoint(p.endpoint).action(p.action).method(p.method)(timeout=p.timeout, **p.data)
-    print(json.dumps(result, indent=p.indent))
-
-
-if __name__ == '__main__':
-
-    # Enter CLI
-    cli()
