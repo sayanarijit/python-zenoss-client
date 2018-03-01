@@ -69,6 +69,7 @@ class ZenossClient(object):
         self.baseurl = 'https://' + host + dmd
         self.session = requests.Session()
         self.session.auth = (user, passwd)
+        self.session.verify = verify
         self.session.headers.update({'content-type': 'application/json'})
         self.session.tid = 0
 
