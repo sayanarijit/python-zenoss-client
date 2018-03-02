@@ -3,7 +3,7 @@ from codecs import open
 from os import path
 
 
-VERSION = 'v0.0.4'
+VERSION = 'v1.0.0'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -31,7 +31,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: Information Technology',
         'Intended Audience :: System Administrators',
