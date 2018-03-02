@@ -8,6 +8,9 @@ Website         : https://sayanarijit.github.io
 from __future__ import absolute_import, unicode_literals
 import json
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 router_endpoints = {
