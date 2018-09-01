@@ -44,6 +44,11 @@ api.endpoint('device_router').action('DeviceRouter').method('getDevices')(params
 api.device_router.DeviceRouter.getDevices(params={'name': 'testdevice'})
 ```
 
+* With timeout
+
+```python
+api.device_router.DeviceRouter.getDevices(params={'name': 'testdevice'}, timeout=10)
+```
 
 ### Documentation
 
