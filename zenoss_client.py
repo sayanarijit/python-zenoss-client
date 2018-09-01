@@ -135,6 +135,8 @@ class ZenossAction(object):
         Return callable method
         """
         def wrapped(timeout=None, **kwargs):
+            if os.environ['zenossTimeOut']:
+                timeout = int(os.environ['zenossTimeOut'])
             payload = {'action': self.action, 'method': method,
                     'tid': self.session.tid, 'data': [kwargs]}
             result = self.session.post(
