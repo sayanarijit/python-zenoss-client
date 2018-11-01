@@ -3,7 +3,7 @@ from codecs import open
 from os import path
 
 
-VERSION = 'v1.0.0'
+VERSION = 'v1.0.1'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -20,6 +20,7 @@ setup(
     version=VERSION,
     description='Zenoss API client for python',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/sayanarijit/python-zenoss-client',
     download_url='https://github.com/sayanarijit/python-zenoss-client/archive/{}.tar.gz'.format(VERSION),
     author='Arijit Basu',
